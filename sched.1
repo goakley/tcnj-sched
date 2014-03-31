@@ -1,0 +1,88 @@
+.TH SCHED 1 2014-03-31 0.0.0 "General Commands Menu"
+.SH NAME
+sched \- Room scheduler daemon program
+.SH SYNOPSIS
+.B sched
+.RI [\| db3 \|]
+.SH DESCRIPTION
+.B sched
+is a room scheduling system.
+The system is designed to solve the problem of allowing users to reserve common space for different time intervals.
+There is no restriction on the times the users can reserve, as long as another user has not reserved any part of that time block.
+The executable runs as a daemon process that accepts incoming connections on port 3165 (typically, a user through the
+.BR telnet (1)
+program).
+.PP
+Users of the system come in three flavours: administrators, students, and faculty.
+Faculty and students are identical save for certain attributes (see
+.BR ATTRIBUTES ).
+.SS Configuration
+The database must be independently created and then seeded with information (see
+.BR FILES )
+in order for the program to function correctly.
+Running the daemon and then immediately exiting will cause the database schema to be initialied in the sqlite file.
+From there, administrators should pick their database software of choice to populate the
+.I room
+and
+.I user
+tables.
+These two tables cannot be modified by the program itself, and should not be modified while the daemon is running.
+.PP
+The
+.I user
+table has an attribute called
+.I status
+that signifies the level of the user:
+0 is a student user, 1 is a faculty user, and 2 is an administrator.
+Administrators have the ability to modify other user's requests and reservations.
+All users are notified of administrative changes to their state through email (the email settings are configured at compile time).
+.SS Client Usage
+System usage is explained upon connection to the daemon.
+.SH ERRORS
+.B sched
+uses
+.BR syslog (3)
+to record any errors in execution.
+As this is a daemon program, most system errors are encapsulated within asserts;
+logged errors are typically addressable by the administrator and/or user.
+Errors are typically related to access of the database, and should never arise unless the database is being modified externally while the daemon is running or unless the schema has been modified.
+.PP
+Recoverable errors, such as those encountered when input from a user is incorrect, are not logged.
+.PP
+.SH FILES
+.TP
+.I db3
+The sqlite3 database used internally by the program.
+This file can have its
+.I room
+and
+.I user
+table modified externally to control those aspects of the system.
+If not passed as an argument, the file
+.RI '\| db.db3 \|'
+is expected to be in the current working directory when the daemon is run.
+Note that editing this database externally while the daemon is running is an idea on par with covering oneself in peanut butter and running through the local zoo shouting obscenities, as is running multiple daemons using the same database file.
+.SH ATTRIBUTES
+.SS Multithreading
+The daemon allocates to each user a single thread, which will contain that user until the termination of the user's individual session.
+Access to the room data is blocked based on these user threads (in order to safely update);
+a user's entire session is blocked while waiting for an operation to complete.
+This ensures database integrity.
+In making requests concurrently with other sessions, administrators have priority over all types of users, and students have priority over all non-administrative users (faculty).
+The system has been designed to minimize the complexity of these critical operations for increased user responsiveness.
+.SH BUGS
+User input lacks robust error checking.
+Any input will be parsed as much as possible, which can lead to very strange results if the user is not careful to follow syntax exactly as described (read: segfaults).
+Catchable failures are described to the user appropraitely.
+The program attempts to also be verbose on success in order to verify with the user that their action was correctly interpreted.
+.PP
+The test suite has 0% code coverage.
+This is attributed to a lack of test suite.
+.SH SEE ALSO
+.BR telnet (1),
+.BR syslog (3)
+.SH COPYING
+Copyright (C) 2014 Glen Oakley
+.PP
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation License, Version 1.3 or any later version published by the Free Software Foundation;
+with no Invariant Sections, no Front-Cover Texts and no Back-Cover Texts.

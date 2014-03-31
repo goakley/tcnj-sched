@@ -1,0 +1,15 @@
+# Compiling
+
+`make` to build the executable `sched` in the CWD, `make install` to install the executable and man page.
+
+We're rolling our own sqlite3 amalgamation because this project in no way deserves the Autotools.
+
+# Running
+
+See the man page `man ./sched.1` (`man 1 sched` if installed).
+
+Database contains sample rooms and sample user '623767' and may or may not contain sample reservations.
+
+# Testing
+
+No testing.  Manual test cases can be found in the 'cases' folder.
